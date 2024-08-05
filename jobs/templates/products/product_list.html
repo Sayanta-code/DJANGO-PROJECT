@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Product Listing</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.css"
+    />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f9;
+      }
+      .container {
+        width: 90%;
+        margin: auto;
+        overflow: hidden;
+      }
+      h2 {
+        text-align: center;
+        color: #333;
+        margin-top: 20px;
+      }
+      #uploadExcelBtn {
+        display: block;
+        margin: 20px auto;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+      #uploadExcelBtn:hover {
+        background-color: #0056b3;
+      }
+      #product_table_wrapper {
+        margin-top: 20px;
+      }
+      #uploadExcelModal {
+        display: none;
+        padding: 20px;
+        background: white;
+        border-radius: 5px;
+      }
+      #uploadExcelModal h2 {
+        margin-top: 0;
+      }
+      #uploadExcelModal form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      #uploadExcelModal .file-input-container {
+        border: 2px dashed #007bff;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        margin-bottom: 15px;
+      }
+      #uploadExcelModal .file-input-container:hover {
+        background-color: #f1f1f1;
+      }
+      #uploadExcelModal .file-input-container p {
+        margin: 0;
+        font-size: 16px;
+        color: #007bff;
+      }
+      #uploadExcelModal input[type="file"] {
+        display: none;
+      }
+      #uploadExcelModal .file-name {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #333;
+      }
+      #uploadExcelModal form button {
+        align-self: flex-start;
+        padding: 10px 20px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+      #uploadExcelModal form button:hover {
+        background-color: #218838;
+      }
+      #loader {
+        display: none;
+        border: 16px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 16px solid #3498db;
+        width: 60px;
+        height: 60px;
+        -webkit-animation: spin 2s linear infinite;
+        animation: spin 2s linear infinite;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+      }
+      @-webkit-keyframes spin {
+        0% {
+          -webkit-transform: rotate(0deg);
+        }
+        100% {
+          -webkit-transform: rotate(360deg);
+        }
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      #snackbar {
+        visibility: hidden;
+        min-width: 250px;
+        margin-left: -125px;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 2px;
+        padding: 16px;
+        position: fixed;
+        z-index: 1;
+        left: 50%;
+        bottom: 30px;
+        font-size: 17px;
+      }
+      #snackbar.show {
+        visibility: visible;
+        -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        animation: fadein 0.5s, fadeout 0.5s 2.5s;
+      }
+      @-webkit-keyframes fadein {
+        from {
+          bottom: 0;
+          opacity: 0;
+        }
+        to {
+          bottom: 30px;
+          opacity: 1;
+        }
+      }
+      @keyframes fadein {
+        from {
+          bottom: 0;
+          opacity: 0;
+        }
+        to {
+          bottom: 30px;
+          opacity: 1;
+        }
+      }
+      @-webkit-keyframes fadeout {
+        from {
+          bottom: 30px;
+          opacity: 1;
+        }
+        to {
+          bottom: 0;
+          opacity: 0;
+        }
+      }
+      @keyframes fadeout {
+        from {
+          bottom: 30px;
+          opacity: 1;
+        }
+        to {
+          bottom: 0;
+          opacity: 0;
+        }
+      }
+      #snackbar.error {
+        background-color: red;
+        color: white;
+      }
+      #snackbar.success {
+        background-color: green;
+        color: white;
+      }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Product Listing</h2>
+      <button id="uploadExcelBtn">Upload Excel</button>
+      <table id="product_table" class="display">
+        <thead>
+          <tr>
+            <th>Sl No</th>
+            <th>Product Name</th>
+            <th>Lowest Price</th>
+            <th>Variations & Stock</th>
+            <th>Last Updated</th>
+          </tr>
+        </thead>
+      </table>
+
+      <!-- Modal HTML embedded directly into document -->
+      <div id="uploadExcelModal" class="modal">
+        <h2>Upload Excel File</h2>
+        <form
+          id="uploadExcelForm"
+          method="post"
+          enctype="multipart/form-data"
+          action="{% url 'upload_excel' %}"
+        >
+          {% csrf_token %}
+          <div
+            class="file-input-container"
+            id="fileInputContainer"
+            ondrop="dropHandler(event);"
+            ondragover="dragOverHandler(event);"
+            onclick="document.getElementById('excel_file').click();"
+          >
+            <p>Drag and drop a file here or click to select a file</p>
+            <input type="file" name="excel_file" id="excel_file" required />
+            <div class="file-name" id="fileName"></div>
+          </div>
+          <button type="submit">Upload</button>
+        </form>
+      </div>
+
+      <!-- Loader -->
+      <div id="loader"></div>
+
+      <!-- Snackbar to show error messages -->
+      <div id="snackbar"></div>
+
+      <!-- JSON Error Message -->
+      <script type="application/json" id="error-message-json">
+        {{ error_message|escapejs }}
+      </script>
+    </div>
+
+    <script>
+      $(document).ready(function () {
+        document.getElementById("excel_file").value = "";
+        $("#uploadExcelForm")[0].reset();
+        $("#product_table").DataTable({
+          ajax: "{% url 'product_data' %}",
+          columns: [
+            { data: "id" },
+            { data: "name" },
+            { data: "lowest_price" },
+            {
+              data: "variations",
+              render: function (data, type, row) {
+                let variationsTable =
+                  "<table><tr><th>Variation</th><th>Stock</th></tr>";
+                data.forEach(function (varItem) {
+                  variationsTable +=
+                    "<tr><td>" +
+                    varItem.variation +
+                    "</td><td>" +
+                    varItem.stock +
+                    "</td></tr>";
+                });
+                variationsTable += "</table>";
+                return variationsTable;
+              },
+            },
+            {
+              data: "last_updated",
+              render: function (data, type, row) {
+                const options = {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "numeric",
+                  second: "numeric",
+                  hour12: true,
+                  timeZoneName: "short",
+                };
+                return new Date(data).toLocaleString("en-US", options);
+              },
+            },
+          ],
+        });
+
+        // Open the modal
+        $("#uploadExcelBtn").click(function () {
+          $("#uploadExcelModal").modal();
+        });
+
+        // Show snackbar for errors
+        const errorMessage =
+          document.getElementById("error-message-json").textContent;
+        document.getElementById("error-message-json").textContent = "";
+
+        console.log(
+          "error in front",
+          errorMessage,
+          typeof errorMessage,
+          errorMessage.length,
+          document.getElementById("error-message-json").textContent,
+          "heh"
+        );
+        if (errorMessage.length != 16 && errorMessage.length != 33) {
+          var snackbar = document.getElementById("snackbar");
+          snackbar.innerText = errorMessage.replace(/\\u0027/g, "'");
+          snackbar.className = "show error";
+          console.log("here in 1");
+          setTimeout(function () {
+            snackbar.className = snackbar.className.replace("show error", "");
+            document.getElementById("error-message-json").textContent = "";
+            document.getElementById("fileName").textContent = "";
+            document.getElementById("excel_file").value = "";
+            // document.getElementById("error-message-json").innerHTML = "";
+          }, 5000);
+
+          $("#product_table").DataTable().ajax.reload(null, false);
+        } else {
+          if (errorMessage.length != 33) {
+            console.log("here in 2");
+            var snackbar = document.getElementById("snackbar");
+            snackbar.innerText = "File uploaded successfully.";
+            snackbar.className = "show success";
+            setTimeout(function () {
+              snackbar.className = snackbar.className.replace(
+                "show success",
+                ""
+              );
+              document.getElementById("error-message-json").textContent = "";
+              document.getElementById("fileName").textContent = "";
+              document.getElementById("excel_file").value = "";
+              // document.getElementById("error-message-json").innerHTML = "";
+            }, 5000);
+          }
+        }
+
+        // Loader functionality
+        $("#uploadExcelForm").on("submit", function (event) {
+          $("#loader").show();
+          //   document.getElementById("excel_file").value = "";
+        });
+      });
+
+      // Drag and drop file handling
+      function dropHandler(event) {
+        event.preventDefault();
+        var files = event.dataTransfer.files;
+        if (files.length > 0) {
+          document.getElementById("excel_file").files = files;
+          var fileName = files[0].name;
+          document.getElementById("fileName").textContent = fileName;
+        }
+      }
+
+      function dragOverHandler(event) {
+        event.preventDefault();
+      }
+
+      // Update file name on input change
+      document
+        .getElementById("excel_file")
+        .addEventListener("change", function (event) {
+          var fileName = event.target.files[0].name;
+          document.getElementById("fileName").textContent = fileName;
+        });
+    </script>
+  </body>
+</html>

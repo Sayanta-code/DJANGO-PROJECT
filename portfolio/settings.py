@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
-import django_heroku
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -25,7 +25,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY") or b"\x1c=\xb2\xfa?\xbcn\x91K\x9c\xe7=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["brennan-django.herokuapp.com", "localhost"]
+ALLOWED_HOSTS = ["brennan-django.herokuapp.com", "localhost","127.0.0.1",'render.com']
 
 # Application definition
 
@@ -76,13 +76,15 @@ WSGI_APPLICATION = 'portfolio.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ.get("ENV_NAME") or 'portfoliodb',
-        'USER': os.environ.get("ENV_USER") or 'postgres',
-        'PASSWORD': os.environ.get("ENV_PASSWORD") or 'password123456',
-        'HOST': os.environ.get("ENV_HOST") or 'localhost',
-        'PORT': os.environ.get("ENV_PORT") or '5432',
+        'NAME':  'assesment_db',
+        'USER': 'assesment_db_user',
+        'PASSWORD': 'ERxsnNgxY8ncGWezJVCnGTEzo6rZppwd',
+        'HOST': 'dpg-cqnt5co8fa8c73au3kgg-a.oregon-postgres.render.com',
+        'PORT':  '5432',
     }
 }
+
+#postgresql://assesment_db_user:ERxsnNgxY8ncGWezJVCnGTEzo6rZppwd@dpg-cqnt5co8fa8c73au3kgg-a.oregon-postgres.render.com/assesment_db
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
